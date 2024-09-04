@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="easy_rss",
-    version="1.2",
+    version="1.2.1",
     author="Michael Mondoro",
     author_email="michaelmondoro@gmail.com",
     description="Simple Python package for interacting with RSS feeds",
