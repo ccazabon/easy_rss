@@ -64,6 +64,7 @@ class Entry:
     summary:str 
     authors:list 
     def __post_init__(self):
+        self.summary = self.summary.strip()
         if self.published:
             self.published = parser.parse(self.published.strip())
             self.published = self.published.astimezone(timezone('US/Eastern'))
@@ -76,6 +77,7 @@ class Item:
     pubDate:str 
     description:str 
     def __post_init__(self):
+        self.description = self.description.strip()
         if self.pubDate:
             self.pubDate = parser.parse(self.pubDate.strip())
             self.pubDate = self.pubDate.astimezone(timezone('US/Eastern'))
