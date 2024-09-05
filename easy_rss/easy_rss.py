@@ -6,16 +6,35 @@ from dataclasses import dataclass
 
 class EasyRSS():
     def __init__(self, feed_url:str):
-        self.articles = []
         self.feed = feed_url
-
-    def get_news(self):
+        self.raw = self.__get_feed()
+        self.title = self.__feed_title()
         self.articles = []
+        self.err = None 
+
+        self.get_news()
+
+    def __get_feed(self):
         xml = requests.get(self.feed, timeout=10)
         if (xml.status_code != 200):
-            raise ConnectionError(f"({xml.status_code}) error getting feed from {self.feed} \n [ {xml.content} ]", )
+            self.err = f"HTTP error [{xml.status_code}] getting feed from {self.feed}"
+        return xml.content
         
-        soup = bs.BeautifulSoup(xml.content, "xml")
+    def __feed_title(self):
+        title = None
+        soup = bs.BeautifulSoup(self.raw, 'xml')
+        if soup.find("feed"):
+            title = soup.find('feed').find('title').text if soup.find('feed').find('title') else ""
+        elif soup.find("channel"):
+            title = soup.find('channel').find('title').text if soup.find('channel').find('title') else ""
+        return title
+    
+    def get_news(self):
+        xml = self.__get_feed()
+        soup = bs.BeautifulSoup(xml, "xml")
+        if (not (soup.find("feed") or soup.find("channel")) ):
+            self.err = f"Couldn't find <feed> OR <channel> tag - perhaps feed is invalid?"
+
         return self._process(soup)
     
     def _process(self, soup:bs.BeautifulSoup):
@@ -56,6 +75,9 @@ class EasyRSS():
         authors = [ author.find('name').text for author in tag.find_all("author") if author.find('name')]
         return Entry(title, link, date, desc, authors)
     
+    def __str__(self):
+        return f"EasyRSS(title='{self.title}', feed='{self.feed}', articles={len(self.articles)}, err={self.err!=None})"
+    
 @dataclass
 class Entry:
     title:str
@@ -82,3 +104,8 @@ class Item:
             self.pubDate = parser.parse(self.pubDate.strip())
             self.pubDate = self.pubDate.astimezone(timezone('US/Eastern'))
             self.pubDate = self.pubDate.strftime("%b %d, %Y %I:%M%p")
+
+rss = EasyRSS('http://www.washingtontimes.com/rss/headlines/news/politics/')
+print(rss)
+print(rss.err)
+print(rss.get_news())
