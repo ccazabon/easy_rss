@@ -104,8 +104,3 @@ class Item:
             self.pubDate = parser.parse(self.pubDate.strip())
             self.pubDate = self.pubDate.astimezone(timezone('US/Eastern'))
             self.pubDate = self.pubDate.strftime("%b %d, %Y %I:%M%p")
-
-rss = EasyRSS('http://www.washingtontimes.com/rss/headlines/news/politics/')
-print(rss)
-print(rss.err)
-print(rss.get_news())
