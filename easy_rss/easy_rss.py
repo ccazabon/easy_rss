@@ -15,27 +15,31 @@ class EasyRSS():
         self.get_news()
 
     def __get_feed(self):
-        xml = requests.get(self.feed, timeout=10)
-        if (xml.status_code != 200):
-            self.err = f"HTTP error [{xml.status_code}] getting feed from {self.feed}"
-        return xml.content
-        
+        try:
+            xml = requests.get(self.feed, timeout=10)
+            if (xml.status_code != 200):
+                self.err = f"HTTP error [{xml.status_code}] getting feed from {self.feed}"
+            return xml.content
+        except requests.exceptions.ReadTimeout:
+            self.err = f"HTTP timeout getting feed from {self.feed}"
+            
     def __feed_title(self):
-        title = None
-        soup = bs.BeautifulSoup(self.raw, 'xml')
-        if soup.find("feed"):
-            title = soup.find('feed').find('title').text if soup.find('feed').find('title') else ""
-        elif soup.find("channel"):
-            title = soup.find('channel').find('title').text if soup.find('channel').find('title') else ""
-        return title
+        if self.raw:
+            title = None
+            soup = bs.BeautifulSoup(self.raw, 'xml')
+            if soup.find("feed"):
+                title = soup.find('feed').find('title').text if soup.find('feed').find('title') else ""
+            elif soup.find("channel"):
+                title = soup.find('channel').find('title').text if soup.find('channel').find('title') else ""
+            return title
     
     def get_news(self):
         xml = self.__get_feed()
-        soup = bs.BeautifulSoup(xml, "xml")
-        if (not (soup.find("feed") or soup.find("channel")) ):
-            self.err = f"Couldn't find <feed> OR <channel> tag - perhaps feed is invalid?"
-
-        return self._process(soup)
+        if xml:
+            soup = bs.BeautifulSoup(xml, "xml")
+            if (not (soup.find("feed") or soup.find("channel")) ):
+                self.err = f"Couldn't find <feed> OR <channel> tag - perhaps feed is invalid?"
+            return self._process(soup)
     
     def _process(self, soup:bs.BeautifulSoup):
         if soup.find("feed"):
